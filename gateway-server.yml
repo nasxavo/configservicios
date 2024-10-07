@@ -1,0 +1,40 @@
+server:
+  port: 9000
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Esto habilita el uso de Eureka para descubrir servicios
+      routes:
+        - id: servicio-libros-route  # ID único para la ruta
+          uri: lb://servicio-libros  # 'lb' indica el uso de LoadBalancer con Eureka
+          predicates:
+            - Path=/serviciolibros/**  # Ruta que va a enrutar al servicio 'servicio-libros'
+          filters:
+            - RewritePath=/serviciolibros/*, /  # Elimina la primera parte de la URL al enrutar
+
+        - id: cliente-libros-route  # Nueva ruta para 'cliente-libros'
+          uri: lb://cliente-libros  # Servicio registrado en Eureka
+          predicates:
+            - Path=/clientelibros/**  # Ruta que va a enrutar al servicio 'cliente-libros'
+          filters:
+            - RewritePath=/clientelibros/*, /  # Elimina la primera parte de la URL al enrutar
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':  # Habilita CORS para todas las rutas
+            allowedOrigins: "*"  # Permitir cualquier origen
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/  # URL del servidor Eureka
+    fetch-registry: true  # Habilita la capacidad de obtener el registro de servicios de Eureka
+    register-with-eureka: false  # No registrar el API Gateway en Eureka
+  instance:
+    prefer-ip-address: true  # Usar la dirección IP en lugar del hostname para registro
